@@ -1,0 +1,1 @@
+wt -d . --title "ngrok" cmd /k ngrok start example; new-tab --title "RabbitMQ" -p "Windows Powershell" cmd /k docker run -p 15672:15672 -p 5672:5672 masstransit/rabbitmq; new-tab -d "<BE-location>" --title "BE"; new-tab -d "<FE-location>" --title "FE"

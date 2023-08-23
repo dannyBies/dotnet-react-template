@@ -1,5 +1,6 @@
+using Example.Database.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Example.Database;
 
@@ -12,13 +13,65 @@ public class ExampleDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        optionsBuilder.AddInterceptors(new AuditInterceptor());
         optionsBuilder.UseSqlServer(@"Server=localhost;Database=example;Trusted_Connection=True;TrustServerCertificate=True;");
     }
 }
 
-public abstract record Entity(DateTimeOffset CreatedAt)
+public class AuditInterceptor : ISaveChangesInterceptor
 {
-    public Guid Id { get; set; }
+    public ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        AddAuditProperties(eventData.Context);
+        return ValueTask.FromResult(result);
+    }
+
+    public InterceptionResult<int> SavingChanges(
+        DbContextEventData eventData,
+        InterceptionResult<int> result)
+    {
+        AddAuditProperties(eventData.Context);
+        return result;
+    }
+
+    public void AddAuditProperties(DbContext? context)
+    {
+        if (context == null)
+        {
+            return;
+        }
+
+        var insertedEntries = context.ChangeTracker.Entries()
+            .Where(x => x.State == EntityState.Added)
+            .Select(x => x.Entity);
+        foreach (var entry in insertedEntries)
+        {
+            if (entry is Entity entity)
+            {
+                entity.CreatedAt = DateTimeOffset.UtcNow;
+            }
+        }
+
+        var modifiedEntries = context.ChangeTracker.Entries()
+            .Where(x => x.State == EntityState.Modified)
+            .Select(x => x.Entity);
+        foreach (var entry in modifiedEntries)
+        {
+            if (entry is Entity entity)
+            {
+                entity.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+        }
+    }
 }
 
-public record User(string ExternalId, string ConnectionName, string? Email) : Entity(DateTimeOffset.UtcNow);
+
+public abstract class Entity
+{
+    public Guid Id { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+}

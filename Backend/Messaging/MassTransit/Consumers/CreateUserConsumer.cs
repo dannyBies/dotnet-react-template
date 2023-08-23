@@ -2,6 +2,7 @@
 using Example.Controllers;
 using Example.Database;
 using Example.Messaging.MassTransit.Contracts;
+using Example.Database.Entities;
 
 namespace Example.MassTransit.Messaging.Consumers
 {
@@ -16,7 +17,7 @@ namespace Example.MassTransit.Messaging.Consumers
 
         public async Task Consume(ConsumeContext<CreateUser> context)
         {
-            var newUser = new User(context.Message.ExternalId, context.Message.ConnectionName, context.Message.Email);
+            var newUser = new User { ExternalId = context.Message.ExternalId, ConnectionName = context.Message.ConnectionName, Email = context.Message.Email };
             using (var dbContext = new ExampleDbContext())
             {
                 dbContext.Users.EnsureDoesNotExist(user => user.ExternalId == newUser.ExternalId);

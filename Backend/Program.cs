@@ -12,6 +12,7 @@ using Serilog.Events;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
+using MassTransit.SignalR;
 
 namespace Example
 {
@@ -42,6 +43,8 @@ namespace Example
 
                 builder.Services.AddMassTransit(x =>
                 {
+                    x.AddSignalRHub<ExampleHub>();
+
                     x.AddConsumers(entryAssembly);
 
                     x.SetKebabCaseEndpointNameFormatter();

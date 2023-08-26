@@ -6,9 +6,6 @@ I've structured the code to ensure everything is accessible from a single assemb
 
 The following features still need to implemented:
 
-- Scalability
-  - Deploy multiple MassTransit servers
-  - Implement SignalR backplane
 - Code quality
   - Refactor program.cs using extension methods
   - Add roslyn analyzers
